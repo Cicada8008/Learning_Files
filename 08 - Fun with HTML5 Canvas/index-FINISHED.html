@@ -1,74 +1,205 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>HTML5 Canvas</title>
-  <link rel="icon" href="https://fav.farm/✅" />
+  <meta charset="utf-8" />
+  <title>Canvas Background Modes</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    html, body {
+      margin: 0;
+      height: 100%;
+      overflow: hidden;
+    }
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: system-ui, sans-serif;
+      flex-direction: column;
+      gap: 20px;
+    }
+    canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+    }
+    .search-container {
+      z-index: 1;
+      display: flex;
+      gap: 8px;
+      background: rgba(255,255,255,0.85);
+      border-radius: 50px;
+      padding: 12px 20px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    }
+    .search-container input {
+      border: none;
+      outline: none;
+      font-size: 1.2rem;
+      flex: 1;
+      background: transparent;
+    }
+    .search-container button {
+      border: none;
+      background: #333;
+      color: #fff;
+      font-size: 1rem;
+      border-radius: 30px;
+      padding: 8px 16px;
+      cursor: pointer;
+    }
+    .buttons {
+      z-index: 1;
+      display: flex;
+      gap: 12px;
+    }
+    .buttons button {
+      padding: 8px 16px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      background: rgba(255,255,255,0.85);
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+      font-size: 1rem;
+      transition: background 0.3s;
+    }
+    .buttons button.active {
+      background: #333;
+      color: #fff;
+    }
+  </style>
 </head>
 <body>
-<canvas id="draw" width="800" height="800"></canvas>
+  <canvas id="bg"></canvas>
+
+  <div class="search-container">
+    <input type="text" placeholder="Search..." />
+    <button>Go</button>
+  </div>
+
+  <div class="buttons">
+    <button data-mode="pinwheel" class="active">Pinwheel</button>
+    <button data-mode="spats">Spats</button>
+    <button data-mode="strokes">Strokes</button>
+  </div>
+
 <script>
-const canvas = document.querySelector('#draw');
+const canvas = document.getElementById('bg');
 const ctx = canvas.getContext('2d');
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
-ctx.strokeStyle = '#BADA55';
-ctx.lineJoin = 'round';
-ctx.lineCap = 'round';
-ctx.lineWidth = 100;
-// ctx.globalCompositeOperation = 'multiply';
+const buttons = document.querySelectorAll('.buttons button');
 
-let isDrawing = false;
-let lastX = 0;
-let lastY = 0;
-let hue = 0;
-let direction = true;
+let mode = "pinwheel";
 
-function draw(e) {
-  if (!isDrawing) return; // stop the fn from running when they are not moused down
-  console.log(e);
-  ctx.strokeStyle = `hsl(${hue}, 100%, 50%)`;
-  ctx.beginPath();
-  // start from
-  ctx.moveTo(lastX, lastY);
-  // go to
-  ctx.lineTo(e.offsetX, e.offsetY);
-  ctx.stroke();
-  [lastX, lastY] = [e.offsetX, e.offsetY];
-
-  hue++;
-  if (hue >= 360) {
-    hue = 0;
-  }
-  if (ctx.lineWidth >= 100 || ctx.lineWidth <= 1) {
-    direction = !direction;
-  }
-
-  if(direction) {
-    ctx.lineWidth++;
-  } else {
-    ctx.lineWidth--;
-  }
-
-}
-
-canvas.addEventListener('mousedown', (e) => {
-  isDrawing = true;
-  [lastX, lastY] = [e.offsetX, e.offsetY];
+buttons.forEach(btn => {
+  btn.addEventListener('click', () => {
+    mode = btn.dataset.mode;
+    buttons.forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    // ❌ no clearing here → background stays persistent
+  });
 });
 
+function resize() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resize);
+resize();
 
-canvas.addEventListener('mousemove', draw);
-canvas.addEventListener('mouseup', () => isDrawing = false);
-canvas.addEventListener('mouseout', () => isDrawing = false);
+let angle = 0;
+let spats = [];
+let hue = 0;
 
-</script>
+// ---------------- PINWHEEL ----------------
+function drawPinwheel() {
+  const { width, height } = canvas;
+  const cx = width / 2;
+  const cy = height / 2;
+  const radius = Math.hypot(width, height);
+  const numSegments = 60;
+  const step = (Math.PI * 2) / numSegments;
 
-<style>
-  html, body {
-    margin: 0;
+  for (let i = 0; i < numSegments; i++) {
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, radius, angle + i * step, angle + (i + 1) * step);
+    ctx.closePath();
+    ctx.fillStyle = `hsl(${(i * (360 / numSegments) + angle * 180 / Math.PI) % 360}, 100%, 50%)`;
+    ctx.fill();
   }
-</style>
+  angle += 0.01;
+}
 
+// ---------------- SPATS ----------------
+function drawSpats() {
+  // fade overlay for smooth effect, not full wipe
+  ctx.fillStyle = "rgba(0,0,0,0.1)";
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+
+  if (Math.random() < 0.25) {
+    spats.push({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      r: Math.random() * 100 + 30,
+      hue: Math.random() * 360
+    });
+  }
+  for (let spat of spats) {
+    const grad = ctx.createRadialGradient(spat.x, spat.y, 0, spat.x, spat.y, spat.r);
+    grad.addColorStop(0, `hsla(${spat.hue},100%,50%,0.8)`);
+    grad.addColorStop(1, `hsla(${spat.hue},100%,50%,0)`);
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(spat.x, spat.y, spat.r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+// ---------------- RANDOM STROKES ----------------
+function drawStrokes() {
+  const x = Math.random() * canvas.width;
+  const y = Math.random() * canvas.height;
+  const length = Math.random() * 200 + 100;
+  const thickness = Math.random() * 40 + 20;
+
+  // pick random orientation: horiz, vert, diag \, diag /
+  const choice = Math.floor(Math.random() * 4);
+
+  ctx.strokeStyle = `hsl(${hue},100%,50%)`;
+  ctx.lineWidth = thickness;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(x, y);
+
+  if (choice === 0) {
+    ctx.lineTo(x + length, y); // horizontal
+  } else if (choice === 1) {
+    ctx.lineTo(x, y + length); // vertical
+  } else if (choice === 2) {
+    ctx.lineTo(x + length, y + length); // diagonal \
+  } else {
+    ctx.lineTo(x + length, y - length); // diagonal /
+  }
+
+  ctx.stroke();
+  hue = (hue + 5) % 360;
+}
+
+// ---------------- ANIMATION LOOP ----------------
+function animate() {
+  if (mode === "pinwheel") {
+    drawPinwheel();
+  } else if (mode === "spats") {
+    drawSpats();
+  } else if (mode === "strokes") {
+    drawStrokes();
+  }
+  requestAnimationFrame(animate);
+}
+animate();
+</script>
 </body>
 </html>

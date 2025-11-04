@@ -1,7 +1,7 @@
 html {
   box-sizing: border-box;
   font-size: 10px;
-  background: #ffc600;
+  background: #f2ff00;
 }
 
 *, *:before, *:after {
@@ -55,7 +55,7 @@ h1 {
 }
 
 .mole {
-  background: url('mole.svg') bottom center no-repeat;
+  background: url('cafe.jpg') bottom center no-repeat;
   background-size: 60%;
   position: absolute;
   top: 100%;
@@ -66,4 +66,42 @@ h1 {
 
 .hole.up .mole {
   top: 0;
+}
+button {
+  display: block;             /* makes centering possible */
+  margin: 20px auto;          /* centers horizontally */
+  padding: 12px 24px;         /* adds size */
+  font-weight: bold;          /* bold text */
+  font-size: 18px;            /* larger text */
+  border: none;               /* removes default border */
+  border-radius: 25px;        /* rounded corners */
+  background-color: #4CAF50;  /* nice green background */
+  color: white;               /* white text */
+  cursor: pointer;            /* hand cursor on hover */
+  transition: background 0.3s;
+}
+
+button:hover {
+  background-color: #45a049;  /* darker on hover */
+}
+
+.difficulty-options button {
+  width: 140px;
+  height: 55px;
+  font-size: 3rem;
+  border-radius: 12px;
+  border: 0;
+  cursor: pointer;
+  background: #45a049; /* default yellow */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  transition: all 0.2s ease;
+}
+
+/* selected state */
+.difficulty-options button.selected {
+  background: #fdd835; /* darker yellow */
+  outline: 4px solid #ff6f00; /* highlight ring */
 }
